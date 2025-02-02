@@ -1,9 +1,8 @@
 version: '3.8'
 
 services:
-  postgres:
+  postgres_db:
     image: postgres:13
-    container_name: postgres-test
     environment:
       POSTGRES_USER: testuser
       POSTGRES_PASSWORD: testpassword
@@ -27,10 +26,10 @@ services:
       - DB_PASSWORD=testpassword
       - DB_NAME=testdb
     depends_on:
-      - postgres
+      - postgres_db
     networks:
       - test-network
-    command: ['npm', 'run', 'test:e2e']
+    command: ['npm', 'run', 'test']
 
 networks:
   test-network:
