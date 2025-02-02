@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:13
+    container_name: postgres-test
+    environment:
+      POSTGRES_USER: testuser
+      POSTGRES_PASSWORD: testpassword
+      POSTGRES_DB: testdb
+    ports:
+      - '5432:5432'
+    networks:
+      - test-network
+    volumes:
+      - postgres_test_data:/var/lib/postgresql/data
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nestjs-app-test
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=testuser
+      - DB_PASSWORD=testpassword
+      - DB_NAME=testdb
+    depends_on:
+      - postgres
+    networks:
+      - test-network
+    command: ['npm', 'run', 'test:e2e']
+
+networks:
+  test-network:
+    driver: bridge
+
+volumes:
+  postgres_test_data:
