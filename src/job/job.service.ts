@@ -144,7 +144,10 @@ export class JobService {
         .createQueryBuilder('job')
         .leftJoinAndSelect('job.company', 'company')
         .leftJoinAndSelect('job.location', 'location')
-        .leftJoinAndSelect('job.salary', 'salary');
+        .leftJoinAndSelect('job.salary', 'salary')
+        .leftJoinAndSelect('job.jobType', 'job_types')
+        .leftJoinAndSelect('job.jobSkills', 'jobSkills')
+        .leftJoinAndSelect('jobSkills.skill', 'skill');
 
       if (title) {
         queryBuilder.andWhere('job.title ILIKE :title', {
@@ -181,8 +184,18 @@ export class JobService {
 
       const [jobs, total] = await queryBuilder.getManyAndCount();
 
+      const resultJobs = jobs.map((job) => {
+        const jobSkills = job.jobSkills.map(
+          (jobSkill) => jobSkill.skill.skillName,
+        );
+        return {
+          ...job,
+          jobSkills: jobSkills,
+          jobType: job?.jobType?.type,
+        };
+      });
       return {
-        data: jobs,
+        data: resultJobs,
         total,
         page,
         limit,
