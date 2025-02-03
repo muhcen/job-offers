@@ -11,8 +11,6 @@ services:
       - '5432:5432'
     networks:
       - test-network
-    volumes:
-      - postgres_test_data:/var/lib/postgresql/data
 
   app:
     build:
@@ -20,7 +18,7 @@ services:
       dockerfile: Dockerfile
     container_name: nestjs-app-test
     environment:
-      - DB_HOST=postgres
+      - DB_HOST=postgres_db
       - DB_PORT=5432
       - DB_USER=testuser
       - DB_PASSWORD=testpassword
@@ -34,6 +32,3 @@ services:
 networks:
   test-network:
     driver: bridge
-
-volumes:
-  postgres_test_data:

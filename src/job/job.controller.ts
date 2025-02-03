@@ -54,7 +54,6 @@ export class JobController {
     description: 'Number of results per page for pagination',
   })
   async getJobOffers(@Query() query: GetJobOffersDto): Promise<any> {
-    console.log(query);
     const jobOffers = await this.jobService.getJobOffers(query);
 
     return jobOffers;

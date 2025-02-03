@@ -6,13 +6,9 @@ import {
 } from './interfaces/job-offer-a.interface';
 
 export function transformApiAData(response: JobOfferAResponse): IJob[] {
-  const jobOfferADetails: JobOfferADetails = response.data; // Access the 'data' inside ApiResponse
+  const jobOfferADetails: JobOfferADetails = response.data;
 
   return jobOfferADetails.jobs.map((job) => {
-    console.log(
-      `Processing job: ${job.jobId} - Salary Range: ${job.details.salaryRange}`,
-    );
-
     const salaryRangeParts = job.details.salaryRange.split(' - ');
     let minSalary = null;
     let maxSalary = null;
@@ -24,8 +20,6 @@ export function transformApiAData(response: JobOfferAResponse): IJob[] {
     const locationParts = job.details.location.split(', ');
     const city = locationParts[0];
     const state = locationParts[1];
-
-    console.log(`minSalary: ${minSalary}, maxSalary: ${maxSalary}`);
 
     return {
       jobId: job.jobId,

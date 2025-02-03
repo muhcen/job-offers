@@ -185,7 +185,7 @@ export class JobService {
       const [jobs, total] = await queryBuilder.getManyAndCount();
 
       const resultJobs = jobs.map((job) => {
-        const jobSkills = job.jobSkills.map(
+        const jobSkills = job?.jobSkills?.map(
           (jobSkill) => jobSkill.skill.skillName,
         );
         return {

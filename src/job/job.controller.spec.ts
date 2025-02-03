@@ -17,6 +17,7 @@ import { Salary } from 'src/salary/entities/salary.entity';
 import { Skill } from 'src/skill/entities/skill.entity';
 import { JobSkills } from 'src/skill/entities/job-skills.entity';
 import { Currency } from 'src/salary/entities/currency.entity';
+import { Repository } from 'typeorm';
 
 describe('JobController (e2e)', () => {
   let app: INestApplication;
@@ -28,11 +29,11 @@ describe('JobController (e2e)', () => {
       imports: [
         TypeOrmModule.forRoot({
           type: 'postgres',
-          host: 'postgres_db',
-          port: 5432,
-          username: 'testuser',
-          password: 'testpassword',
-          database: 'testdb',
+          host: process.env.DB_HOST,
+          port: +process.env.DB_PORT,
+          username: process.env.DB_USER,
+          password: process.env.DB_PASSWORD,
+          database: process.env.DB_NAME,
           entities: [
             Job,
             Company,
@@ -76,11 +77,99 @@ describe('JobController (e2e)', () => {
     await app.close();
   });
 
-  it('should return an empty array if no job offers match the query', async () => {
+  it('should return job offers with skills when queried by title', async () => {
+    const jobData = {
+      jobId: 'job123',
+      title: 'Software Engineer',
+      type: 'Full-time',
+      name: 'Tech Company',
+      industry: 'Software',
+      skills: ['JavaScript', 'Node.js', 'React'],
+      postedDate: new Date(),
+      minSalary: 60000,
+      maxSalary: 120000,
+      city: 'New York',
+      state: 'NY',
+      currency: 'USD',
+      website: 'https://techcompany.com',
+    };
+
+    await jobService.createJob(jobData);
+
     const response = await request(app.getHttpServer())
       .get('/api/job-offers')
-      .query({ title: 'Nonexistent Job Title', page: 1, limit: 10 });
+      .query({
+        title: 'Software Engineer',
+        page: 1,
+        limit: 10,
+      });
 
     expect(response.status).toBe(200);
+    expect(response.body.data).toBeDefined();
+    expect(response.body.data.length).toBeGreaterThan(0);
+  });
+
+  it('should return job offers filtered by city and salary range', async () => {
+    const jobData = {
+      jobId: 'job123',
+      title: 'Software Engineer',
+      type: 'Full-time',
+      name: 'Tech Company',
+      industry: 'Software',
+      skills: ['JavaScript', 'Node.js', 'React'],
+      postedDate: new Date(),
+      minSalary: 60000,
+      maxSalary: 120000,
+      city: 'New York',
+      state: 'NY',
+      currency: 'USD',
+      website: 'https://techcompany.com',
+    };
+
+    await jobService.createJob(jobData);
+
+    const response = await request(app.getHttpServer())
+      .get('/api/job-offers')
+      .query({
+        city: 'New York',
+        minSalary: 60000,
+        maxSalary: 120000,
+        page: 1,
+        limit: 10,
+      });
+
+    expect(response.status).toBe(200);
+    expect(response.body.data).toBeDefined();
+    expect(response.body.data.length).toBeGreaterThan(0);
+  });
+
+  it('should return job offers with pagination', async () => {
+    for (let i = 1; i <= 20; i++) {
+      const jobData = {
+        jobId: `job${i}`,
+        title: `Job ${i}`,
+        type: 'Full-time',
+        name: 'Tech Company',
+        industry: 'Software',
+        skills: ['JavaScript', 'Node.js', 'React'],
+        postedDate: new Date(),
+        minSalary: 60000,
+        maxSalary: 120000,
+        city: 'New York',
+        state: 'NY',
+        currency: 'USD',
+        website: 'https://techcompany.com',
+      };
+      await jobService.createJob(jobData);
+    }
+
+    const response = await request(app.getHttpServer())
+      .get('/api/job-offers')
+      .query({ page: 2, limit: 5 });
+
+    expect(response.status).toBe(200);
+    expect(response.body.data.length).toBe(5);
+    expect(Number(response.body.page)).toBe(2);
+    expect(response.body.totalPages).toBeGreaterThan(2);
   });
 });
