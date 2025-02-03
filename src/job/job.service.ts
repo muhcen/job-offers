@@ -72,36 +72,32 @@ export class JobService {
         website,
       } = jobData;
 
-      let job = await this.jobRepository.findOne({ where: { id: jobId } });
+      let job = this.jobRepository.create({
+        id: jobId,
+        title,
+        postedDate,
+      });
 
-      if (!job) {
-        job = this.jobRepository.create({
-          id: jobId,
-          title,
-          postedDate,
-        });
+      const [company, location, salary, jobType] = await Promise.all([
+        this.companyService.findOrCreateCompany({ name, industry, website }),
+        this.locationService.findOrCreateLocation({ city, state }),
+        this.salaryService.findOrCreateSalary({
+          min: minSalary,
+          max: maxSalary,
+          currency,
+        }),
+        type ? this.findOrCreateJobType(type) : null,
+      ]);
 
-        const [company, location, salary, jobType] = await Promise.all([
-          this.companyService.findOrCreateCompany({ name, industry, website }),
-          this.locationService.findOrCreateLocation({ city, state }),
-          this.salaryService.findOrCreateSalary({
-            min: minSalary,
-            max: maxSalary,
-            currency,
-          }),
-          type ? this.findOrCreateJobType(type) : null,
-        ]);
-
-        if (jobType) {
-          job.jobType = jobType;
-        }
-
-        job.company = company;
-        job.location = location;
-        job.salary = salary;
-
-        job = await this.jobRepository.save(job);
+      if (jobType) {
+        job.jobType = jobType;
       }
+
+      job.company = company;
+      job.location = location;
+      job.salary = salary;
+
+      job = await this.jobRepository.save(job);
 
       await this.skillService.findOrCreateAndAssociateSkills(job, skills);
 
@@ -202,10 +198,7 @@ export class JobService {
         totalPages: Math.ceil(total / limit),
       };
     } catch (error) {
-      this.logger.error(
-        'Error fetching job offers from the database',
-        error.stack,
-      );
+      this.logger.error('Error fetching job offers', error.stack);
 
       throw new HttpException(
         `Database query failed: ${error.message}`,

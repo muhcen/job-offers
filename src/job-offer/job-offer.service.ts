@@ -18,7 +18,7 @@ export class JobOfferService {
     private readonly jobService: JobService,
   ) {}
 
-  @Cron('*/10 * * * * *')
+  @Cron(process.env.CRON_SCHEDULE)
   async getUnifiedJobOffers(): Promise<{ jobs: Job[] }> {
     try {
       const apiAUrl = this.configService.get('API_A_URL');
@@ -39,17 +39,17 @@ export class JobOfferService {
 
       const newJobs = await this.jobService.filterNewJobs(unifiedJobs);
 
-      const createdJobs = await Promise.all(
-        newJobs.map((job) => this.jobService.createJob(job)),
-      );
+      for (const job of newJobs) {
+        await this.jobService.createJob(job);
+      }
 
-      this.logger.log(`Added ${createdJobs.length} new job(s).`);
+      this.logger.log(`Added ${newJobs.length} new job(s).`);
 
       return {
-        jobs: createdJobs,
+        jobs: newJobs,
       };
     } catch (error) {
-      this.logger.error('Error fetching or transforming data', error.stack);
+      this.logger.error('Error fetching and transforming data', error.stack);
       throw new Error('Failed to fetch and transform job offers');
     }
   }
